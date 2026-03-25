@@ -4,21 +4,9 @@ import Container from "../layouts/Container";
 
 const experiences = [
   {
-    role: "MERN Stack Developer (Freelance)",
-    company: "Self-Employed",
-    period: "2023 – Present",
-    type: "Freelance",
-    bullets: [
-      "Built and deployed 5+ full-stack web apps for clients across e-commerce, SaaS, and personal branding.",
-      "Developed RESTful APIs, JWT authentication systems, and real-time features with Socket.io.",
-      "Collaborated directly with clients to translate requirements into production-ready deliverables.",
-      "Managed CI/CD pipelines using GitHub Actions and deployed on Vercel & Railway.",
-    ],
-  },
-  {
-    role: "Frontend Developer Intern",
+    role: "Full-Stack Developer Intern",
     company: "TechStartup (Remote)",
-    period: "Jun 2023 – Oct 2023",
+    period: "May 2024 – Jun 2024",
     type: "Internship",
     bullets: [
       "Worked on a React + TypeScript dashboard consuming internal REST APIs.",
@@ -30,12 +18,24 @@ const experiences = [
   {
     role: "Open Source Contributor",
     company: "GitHub",
-    period: "2023 – Present",
+    period: "2025 – Present",
     type: "Open Source",
     bullets: [
       "Contributed bug fixes and feature PRs to 3+ open-source Node.js/React projects.",
       "Documented APIs and wrote unit tests using Jest and React Testing Library.",
       "Active in developer communities — Discord, reddit r/webdev, and Stack Overflow.",
+    ],
+  },
+  {
+    role: "MERN Stack Developer (Freelance)",
+    company: "Self-Employed",
+    period: "2026 – Present",
+    type: "Freelance",
+    bullets: [
+      "Built and deployed 5+ full-stack web apps for clients across e-commerce, SaaS, and personal branding.",
+      "Developed RESTful APIs, JWT authentication systems, and real-time features with Socket.io.",
+      "Collaborated directly with clients to translate requirements into production-ready deliverables.",
+      "Managed CI/CD pipelines using GitHub Actions and deployed on Vercel & Railway.",
     ],
   },
 ];
@@ -52,7 +52,6 @@ export default function Experience() {
           filter: "blur(80px)",
         }}
       />
-
       <Container>
         {/* header */}
         <div className="flex items-center gap-3 mb-4">

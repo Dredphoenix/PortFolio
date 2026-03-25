@@ -1,6 +1,7 @@
 "use client";
 
 import Container from "../layouts/Container";
+import {motion} from "framer-motion";
 
 const skillGroups = [
   {
@@ -37,9 +38,9 @@ const skillGroups = [
 
 const techBadges = [
   "React", "Next.js", "TypeScript", "Node.js", "Express",
-  "MongoDB", "Mongoose", "TailwindCSS", "Socket.io",
+  "MongoDB", "Mongoose","Redux", "TailwindCSS", "Socket.io",
   "JWT", "REST API", "Git", "GitHub", "Vercel", "Postman",
-  "VS Code", "Figma", "Linux",
+  "VS Code", "Figma", "Linux","SEO","SMO","PostgreSQL",
 ];
 
 export default function Skills() {
@@ -102,31 +103,43 @@ export default function Skills() {
         </div>
 
         {/* tech badge cloud */}
-        <div
-          className="rounded-2xl p-8"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <p className="text-[12px] uppercase tracking-[2.5px] text-white/30 mb-6">
-            All Technologies
-          </p>
-          <div className="flex flex-wrap gap-2.5">
-            {techBadges.map((badge) => (
-              <span
-                key={badge}
-                className="px-4 py-1.5 rounded-full text-[12.5px] text-white/50 transition-all duration-200 hover:text-white hover:border-white/20 cursor-default"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
-        </div>
+      <div
+  className="rounded-2xl p-8 overflow-hidden"
+  style={{
+    background: "rgba(255,255,255,0.02)",
+    border: "1px solid rgba(255,255,255,0.06)",
+  }}
+>
+  <p className="text-[12px] uppercase tracking-[2.5px] text-white/30 mb-6">
+    All Technologies
+  </p>
+
+ <div className="relative overflow-hidden">
+  <motion.div
+    className="flex gap-3 w-max"
+    animate={{ x: [0, -1000] }} // use px, NOT %
+    transition={{
+      repeat: Infinity,
+      repeatType: "loop",
+      duration: 20,
+      ease: "linear",
+    }}
+  >
+    {[...techBadges, ...techBadges].map((badge, i) => (
+      <span
+        key={i}
+        className="px-5 py-2 rounded-full text-[13px] text-white/70 whitespace-nowrap"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+      >
+        {badge}
+      </span>
+    ))}
+  </motion.div>
+</div>
+</div>
       </Container>
     </section>
   );

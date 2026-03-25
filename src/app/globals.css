@@ -47,6 +47,10 @@ body {
   background-color: var(--bg);
   color: var(--fg);
 }
+a,
+button {
+  cursor: pointer;
+}
 
 /* Primary heading tone */
 .text-primary {

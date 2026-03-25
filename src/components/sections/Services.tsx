@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Container from "../layouts/Container";
 import { ArrowUpRight } from "lucide-react";
+import { useWipe } from "../contexts/WipeContext";
 
 const services = [
   {
@@ -48,43 +50,204 @@ const services = [
   },
 ];
 
+interface Dot {
+  r: number;
+  a: number;
+  alpha: number;
+  size: number;
+}
+
+function RadarCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let W = 0,
+      H = 0,
+      cx = 0,
+      cy = 0;
+    let angle = 0;
+    let raf: number;
+
+    const dots: Dot[] = Array.from({ length: 26 }, () => ({
+      r: 0,
+      a: Math.random() * Math.PI * 2,
+      alpha: 0,
+      size: Math.random() * 1.8 + 0.6,
+    }));
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      W = canvas!.offsetWidth;
+      H = canvas!.offsetHeight;
+      canvas!.width = W * dpr;
+      canvas!.height = H * dpr;
+      ctx!.scale(dpr, dpr);
+      cx = W / 2;
+      cy = H * 1.95; // responsive center within bounds
+
+      const maxR = Math.min(W * 0.55, H * 0.85);
+      const mobileMultiplier = W < 400 ? 0.65 : 1;
+      dots.forEach((d) => {
+        d.r = (Math.random() * maxR * 0.75 + maxR * 0.1) * mobileMultiplier;
+      });
+    }
+
+    function draw() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, W, H);
+
+      const maxR = Math.min(W * 0.55, H * 0.85) * 2.28;
+
+      // rings — only the upper half visible
+      [0.2, 0.4, 0.6, 0.8, 1.0].forEach((f) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, maxR * f, Math.PI, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.12)";
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+      });
+
+      // spokes
+      const spokeCount = 14;
+      for (let i = 0; i <= spokeCount; i++) {
+        const a = Math.PI + i * (Math.PI / spokeCount);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+        ctx.strokeStyle = "rgba(255,255,255,0.03)";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      // sweep cone
+      const sweepSpan = Math.PI * 0.6;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, maxR, angle, angle + sweepSpan);
+      ctx.closePath();
+      const gx1 = cx + Math.cos(angle) * maxR * 0.5;
+      const gy1 = cy + Math.sin(angle) * maxR * 0.5;
+      const gx2 = cx + Math.cos(angle + sweepSpan) * maxR * 0.5;
+      const gy2 = cy + Math.sin(angle + sweepSpan) * maxR * 0.5;
+      const sg = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+      sg.addColorStop(0, "rgba(255,255,255,0.12)");
+      sg.addColorStop(0.6, "rgba(255,255,255,0.04)");
+      sg.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = sg;
+      ctx.fill();
+      ctx.restore();
+
+      // sweep line
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      // blip dots
+      dots.forEach((d) => {
+        const diff =
+          (((d.a - angle) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        if (diff < 0.07) d.alpha = 1;
+        d.alpha *= 0.984;
+        if (d.alpha > 0.03) {
+          const dx = cx + Math.cos(d.a) * d.r;
+          const dy = cy + Math.sin(d.a) * d.r;
+          // clip to visible canvas
+          if (dy < 0 || dy > H || dx < 0 || dx > W) return;
+          ctx.beginPath();
+          ctx.arc(dx, dy, d.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${d.alpha * 0.88})`;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(dx, dy, d.size * 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${d.alpha * 0.07})`;
+          ctx.fill();
+        }
+      });
+
+      angle = (angle + 0.014) % (Math.PI * 2);
+      raf = requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(raf);
+      resize();
+      draw();
+    });
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full"
+      aria-hidden="true"
+    />
+  );
+}
+
 export default function Services() {
+  const { triggerWipe } = useWipe();
   return (
     <section id="Services" className="relative bg-black py-32 overflow-hidden">
-      {/* bg glow */}
-      <div
-        className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] opacity-12"
-        style={{
-          background:
-            "radial-gradient(ellipse at top right, rgba(255,255,255,0.1) 0%, transparent 70%)",
-          filter: "blur(100px)",
-        }}
-      />
+      {/* ── radar header with border container ─────────────────── */}
+      <div className="px-4 md:px-8 lg:px-16 mb-16">
+        <div
+          className="relative overflow-hidden h-[260px] sm:h-[280px] md:h-[300px] lg:h-[340px] rounded-2xl"
+          style={{
+            border: "1px solid rgba(255,255,255,0.10)",
+            background: "#000",
+          }}
+        >
+          <div className="hidden lg:block">
+            <RadarCanvas />
+          </div>
 
+          {/* inner content */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-0">
+            {/* pill */}
+            <div className="flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04]">
+              <span className="w-[7px] h-[7px] rounded-full border bg-green-500 border-white/40 flex items-center justify-center"></span>
+              <span className="text-[13px] text-white/50 tracking-wide">
+                Services
+              </span>
+            </div>
+
+            <h2 className="text-[44px] md:text-[56px] font-medium tracking-tight text-white/90 text-center leading-[1.1]">
+              What I{" "}
+              <span
+                className="text-white/40 font-normal"
+                style={{ fontFamily: "Georgia, serif", fontStyle: "italic" }}
+              >
+                Offer
+              </span>
+            </h2>
+
+            <p className="mt-3 text-[14px] text-white/25 tracking-wide">
+              From concept to deployment — I build what you need.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── service grid ────────────────────────────────────────── */}
       <Container>
-        {/* header */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="h-px w-10 bg-white/20" />
-          <span className="text-xs tracking-[3px] uppercase text-white/40">
-            Services
-          </span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-          <h2 className="text-[42px] md:text-[54px] font-bold leading-[1.1] tracking-tight">
-            What I{" "}
-            <span
-              className="text-white/55 font-light"
-              style={{ fontFamily: "Georgia, serif", fontStyle: "italic" }}
-            >
-              Offer
-            </span>
-          </h2>
-          <p className="text-[14px] text-neutral-500 max-w-[300px] leading-relaxed">
-            From concept to deployment — I build what you need.
-          </p>
-        </div>
-
-        {/* service grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map((s, i) => (
             <ServiceCard key={i} {...s} />
@@ -100,7 +263,7 @@ export default function Services() {
           }}
         >
           <div>
-            <h3 className="text-[24px] font-bold text-white mb-2">
+            <h3 className="text-[24px] font-semibold text-white mb-2">
               Have a project in mind?
             </h3>
             <p className="text-[14px] text-neutral-500">
@@ -108,12 +271,18 @@ export default function Services() {
             </p>
           </div>
           <a
-            href="#contact"
-            className="flex items-center gap-2 px-7 py-3 rounded-full text-[13.5px] font-medium text-white shrink-0 transition-all duration-200 hover:brightness-125"
+            className="flex items-center gap-2 px-7 py-3 rounded-full text-[13.5px] font-medium text-white shrink-0 transition-all duration-200 hover:brightness-125 cursor-pointer"
             style={{
               background: "rgba(255,255,255,0.1)",
               border: "1px solid rgba(255,255,255,0.16)",
               backdropFilter: "blur(12px)",
+            }}
+            onClick={() => {
+              triggerWipe(() => {
+                document
+                  .getElementById("Contact")
+                  ?.scrollIntoView({ behavior: "auto" });
+              });
             }}
           >
             Start a Conversation
@@ -157,11 +326,7 @@ function ServiceCard({
       }}
     >
       <div className="flex items-start justify-between">
-        <span
-          className="text-[11px] font-mono text-white/20"
-        >
-          {number}
-        </span>
+        <span className="text-[11px] font-mono text-white/20">{number}</span>
         <ArrowUpRight
           size={14}
           className="text-white/20 group-hover:text-white/50 transition-colors duration-200"
